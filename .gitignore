@@ -98,3 +98,5 @@ gen
 # Created by .ignore support plugin (hsz.mobi)
 netflow.csv
 netflow.csv_639fee2103e6c2d3180d_.gz
+netflow_[0-9]*.pkl
+netflow_[0-9]*.csv
