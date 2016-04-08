@@ -7,4 +7,9 @@ def generate_pkl(n_rows):
     netflow_df = pd.read_csv("netflow.csv", nrows=n_rows)
     netflow_df.to_pickle("netflow_" + str(n_rows) + ".pkl")
 
-generate_pkl(n_rows=5000000)
+def generate_csv(n_rows):
+    netflow_df = pd.read_csv("netflow.csv", nrows=n_rows)
+    netflow_df.to_csv("netflow_" + str(n_rows) + ".csv")
+
+generate_pkl(n_rows=100000)
+generate_csv(n_rows=100000)
