@@ -6,8 +6,6 @@
 | pr | Protocol |
 | sa | Source Address |
 | da | Destination Address |
-| sap | Source Address     :Port |
-| dap | Destination Address:Port |
 | sp | Source Port |
 | dp | Destination Port |
 | nh | Next-hop IP Address |
@@ -17,15 +15,11 @@
 | das | Destination AS |
 | in | Input Interface num |
 | out | Output Interface num |
-| pkt | Packets - default input |
 | ipkt | Input Packets |
 | opkt | Output Packets |
-| byt | Bytes - default input |
 | ibyt | Input Bytes |
 | obyt | Output Bytes |
-| fl | Flows |
 | flg | TCP Flags |
-| tos | Tos - default src |
 | stos | Src Tos |
 | dtos | Dst Tos |
 | dir | Direction: ingress, egress |
@@ -49,6 +43,3 @@
 | mpls9 | MPLS label 9 |
 | mpls10 | MPLS label 10 |
 | eng | Engine type/ID |
-| bps | bps - bits per second |
-| pps | pps - packets per second |
-| bpp | bps - Bytes per package |
