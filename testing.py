@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from utils import plot_to_file
 
-CHUNKSIZE = 10 ** 3
+CHUNKSIZE = 10 ** 5
 
 # dfs = pd.read_csv("netflow_100000.csv", chunksize=CHUNKSIZE, iterator=True)
 #
@@ -15,12 +15,34 @@ ipkts = np.array([])
 opkts = np.array([])
 durations = np.array([])
 
+port_traffic_sender = pd.DataFrame({'sp': [-1], 'ibyt': [-1], 'obyt': [-1]}, index=[0]) # Init with row of port -1 to set the columns as integers
+port_traffic_receiver = pd.DataFrame({'dp': [-1], 'ibyt': [-1], 'obyt': [-1]}, index=[0])
+
 for df in pd.read_csv("netflow_2000000.csv", chunksize=CHUNKSIZE, iterator=True):
-    ibyts = np.append(ipkts, [ df[['ibyt']].mean() ])
-    obyts = np.append(opkts, [ df[['obyt']].mean() ])
-    ipkts = np.append(ipkts, [df[['ipkt']].mean()])
-    opkts = np.append(opkts, [df[['opkt']].mean()])
-    durations = np.append(durations, df[['td']].mean())
+    # ibyts = np.append(ipkts, [ df[['ibyt']].mean() ])
+    # obyts = np.append(opkts, [ df[['obyt']].mean() ])
+    # ipkts = np.append(ipkts, [df[['ipkt']].mean()])
+    # opkts = np.append(opkts, [df[['opkt']].mean()])
+    # durations = np.append(durations, df[['td']].mean())
+
+    # Compute traffic by port
+    port_traffic_sender = pd.concat([port_traffic_sender, df[['sp', 'ibyt', 'obyt']]])
+    gb_sender = port_traffic_sender.groupby('sp')
+    port_traffic_sender = gb_sender.sum().reset_index()
+
+    port_traffic_receiver = pd.concat([port_traffic_receiver, df[['dp', 'ibyt', 'obyt']]])
+    gb_receiver = port_traffic_receiver.groupby('dp')
+    port_traffic_receiver = gb_receiver.sum().reset_index()
+
+# -- Post-processing
+
+port_traffic_sender = port_traffic_sender[port_traffic_sender.sp != -1]
+port_traffic_sender['bytes_tot'] = port_traffic_sender['ibyt'] + port_traffic_sender['obyt']
+
+port_traffic_receiver = port_traffic_receiver[port_traffic_receiver.dp != -1]
+port_traffic_receiver['bytes_tot'] = port_traffic_receiver['ibyt'] + port_traffic_receiver['obyt']
+
+# ---- COMPUTATIONS
 
 # ---- Average packet size
 
@@ -83,3 +105,10 @@ plot_to_file(file_name="ccdf_ipkts_log", title="CCDF of number of packets (in)",
 # Number of packets (out)
 plot_to_file(file_name="ccdf_opkts", title="CCDF of number of packets (out)", x=opkts_base[:-1], y=1-opkts_cumulative, xlabel="Number of packets (out)", ylabel="Complementary Cumulative Probability Distribution")
 plot_to_file(file_name="ccdf_opkts_log", title="CCDF of number of packets (out)", x=opkts_base[:-1], y=1-opkts_cumulative, xlabel="Number of packets (out)", ylabel="Complementary Cumulative Probability Distribution", scale='log')
+
+# ---- Port traffic
+sum_bytes_sender = port_traffic_sender['bytes_tot'].sum()
+sum_bytes_receiver = port_traffic_receiver['bytes_tot'].sum()
+
+port_traffic_sender['bytes_tot_per'] = port_traffic_sender['bytes_tot'] / sum_bytes_sender
+port_traffic_receiver['bytes_tot_per'] = port_traffic_receiver['bytes_tot'] / sum_bytes_receiver
