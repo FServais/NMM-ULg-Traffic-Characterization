@@ -112,3 +112,10 @@ sum_bytes_receiver = port_traffic_receiver['bytes_tot'].sum()
 
 port_traffic_sender['bytes_tot_per'] = port_traffic_sender['bytes_tot'] / sum_bytes_sender
 port_traffic_receiver['bytes_tot_per'] = port_traffic_receiver['bytes_tot'] / sum_bytes_receiver
+
+top_10_sender = port_traffic_sender.sort_index(by=['bytes_tot_per'], ascending=[False])[0:10]
+top_10_receiver = port_traffic_receiver.sort_index(by=['bytes_tot_per'], ascending=[False])[0:10]
+
+print("Top 10 ports as sender:\n")
+for index, row in top_10_sender.iterrows():
+    print("{}".format(int(row['sp'])))
