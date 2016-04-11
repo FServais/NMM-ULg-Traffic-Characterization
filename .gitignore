@@ -100,3 +100,13 @@ netflow.csv
 netflow.csv_639fee2103e6c2d3180d_.gz
 netflow_[0-9]*.pkl
 netflow_[0-9]*.csv
+ccdf_durations.pdf
+ccdf_durations_log.pdf
+ccdf_ibyts.pdf
+ccdf_ibyts_log.pdf
+ccdf_ipkts.pdf
+ccdf_ipkts_log.pdf
+ccdf_obyts.pdf
+ccdf_obyts_log.pdf
+ccdf_opkts.pdf
+ccdf_opkts_log.pdf
