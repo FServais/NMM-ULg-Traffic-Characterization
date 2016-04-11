@@ -2,8 +2,9 @@ import pandas as pd
 import numpy as np
 
 from utils import plot_to_file, plot_pie_to_file
+import ipaddress
 
-CHUNKSIZE = 10 ** 5
+CHUNKSIZE = 10 ** 6
 
 # dfs = pd.read_csv("netflow_100000.csv", chunksize=CHUNKSIZE, iterator=True)
 #
@@ -19,12 +20,18 @@ durations = np.array([])
 port_traffic_sender = pd.DataFrame({'sp': [-1], 'ibyt': [-1], 'obyt': [-1]}, index=[0]) # Init with row of port -1 to set the columns as integers
 port_traffic_receiver = pd.DataFrame({'dp': [-1], 'ibyt': [-1], 'obyt': [-1]}, index=[0])
 
-for df in pd.read_csv("netflow_2000000.csv", chunksize=CHUNKSIZE, iterator=True):
-    # ibyts = np.append(ipkts, [ df[['ibyt']].mean() ])
-    # obyts = np.append(opkts, [ df[['obyt']].mean() ])
-    # ipkts = np.append(ipkts, [df[['ipkt']].mean()])
-    # opkts = np.append(opkts, [df[['opkt']].mean()])
-    # durations = np.append(durations, df[['td']].mean())
+i = 0
+df_save = pd.DataFrame()
+for df in pd.read_csv("netflow.csv", chunksize=CHUNKSIZE, iterator=True):
+    i += 1
+    print("Chunk number {}".format(i))
+    df = df.dropna()
+
+    ibyts = np.append(ipkts, [ df[['ibyt']].mean() ])
+    obyts = np.append(opkts, [ df[['obyt']].mean() ])
+    ipkts = np.append(ipkts, [df[['ipkt']].mean()])
+    opkts = np.append(opkts, [df[['opkt']].mean()])
+    durations = np.append(durations, df[['td']].mean())
 
     # Compute traffic by port
     port_traffic_sender = pd.concat([port_traffic_sender, df[['sp', 'ibyt', 'obyt']]])
@@ -87,25 +94,25 @@ opkts_cumulative = np.cumsum(opkts_values)
 
 # -- Draw
 
-# # Flow duration
-# plot_to_file(file_name="ccdf_durations", title="CCDF of flow duration", x=durations_base[:-1], y=1-durations_cumulative, xlabel="Duration", ylabel="Complementary Cumulative Probability Distribution")
-# plot_to_file(file_name="ccdf_durations_log", title="CCDF of flow duration", x=durations_base[:-1], y=1-durations_cumulative, xlabel="Duration", ylabel="Complementary Cumulative Probability Distribution", scale='log')
-#
-# # Number of bytes (in)
-# plot_to_file(file_name="ccdf_ibyts", title="CCDF of number of bytes (in)", x=ibyts_base[:-1], y=1-ibyts_cumulative, xlabel="Number of bytes (in)", ylabel="Complementary Cumulative Probability Distribution")
-# plot_to_file(file_name="ccdf_ibyts_log", title="CCDF of number of bytes (in)", x=ibyts_base[:-1], y=1-ibyts_cumulative, xlabel="Number of bytes (in)", ylabel="Complementary Cumulative Probability Distribution", scale='log')
-#
-# # Number of bytes (out)
-# plot_to_file(file_name="ccdf_obyts", title="CCDF of number of bytes (out)", x=obyts_base[:-1], y=1-obyts_cumulative, xlabel="Number of bytes (out)", ylabel="Complementary Cumulative Probability Distribution")
-# plot_to_file(file_name="ccdf_obyts_log", title="CCDF of number of bytes (out)", x=obyts_base[:-1], y=1-obyts_cumulative, xlabel="Number of bytes (out)", ylabel="Complementary Cumulative Probability Distribution", scale='log')
-#
-# # Number of packets (in)
-# plot_to_file(file_name="ccdf_ipkts", title="CCDF of number of packets (in)", x=ipkts_base[:-1], y=1-ipkts_cumulative, xlabel="Number of packets (in)", ylabel="Complementary Cumulative Probability Distribution")
-# plot_to_file(file_name="ccdf_ipkts_log", title="CCDF of number of packets (in)", x=ipkts_base[:-1], y=1-ipkts_cumulative, xlabel="Number of packets (in)", ylabel="Complementary Cumulative Probability Distribution", scale='log')
-#
-# # Number of packets (out)
-# plot_to_file(file_name="ccdf_opkts", title="CCDF of number of packets (out)", x=opkts_base[:-1], y=1-opkts_cumulative, xlabel="Number of packets (out)", ylabel="Complementary Cumulative Probability Distribution")
-# plot_to_file(file_name="ccdf_opkts_log", title="CCDF of number of packets (out)", x=opkts_base[:-1], y=1-opkts_cumulative, xlabel="Number of packets (out)", ylabel="Complementary Cumulative Probability Distribution", scale='log')
+# Flow duration
+plot_to_file(file_name="ccdf_durations", title="CCDF of flow duration", x=durations_base[:-1], y=1-durations_cumulative, xlabel="Duration", ylabel="Complementary Cumulative Probability Distribution")
+plot_to_file(file_name="ccdf_durations_log", title="CCDF of flow duration", x=durations_base[:-1], y=1-durations_cumulative, xlabel="Duration", ylabel="Complementary Cumulative Probability Distribution", scale='log')
+
+# Number of bytes (in)
+plot_to_file(file_name="ccdf_ibyts", title="CCDF of number of bytes (in)", x=ibyts_base[:-1], y=1-ibyts_cumulative, xlabel="Number of bytes (in)", ylabel="Complementary Cumulative Probability Distribution")
+plot_to_file(file_name="ccdf_ibyts_log", title="CCDF of number of bytes (in)", x=ibyts_base[:-1], y=1-ibyts_cumulative, xlabel="Number of bytes (in)", ylabel="Complementary Cumulative Probability Distribution", scale='log')
+
+# Number of bytes (out)
+plot_to_file(file_name="ccdf_obyts", title="CCDF of number of bytes (out)", x=obyts_base[:-1], y=1-obyts_cumulative, xlabel="Number of bytes (out)", ylabel="Complementary Cumulative Probability Distribution")
+plot_to_file(file_name="ccdf_obyts_log", title="CCDF of number of bytes (out)", x=obyts_base[:-1], y=1-obyts_cumulative, xlabel="Number of bytes (out)", ylabel="Complementary Cumulative Probability Distribution", scale='log')
+
+# Number of packets (in)
+plot_to_file(file_name="ccdf_ipkts", title="CCDF of number of packets (in)", x=ipkts_base[:-1], y=1-ipkts_cumulative, xlabel="Number of packets (in)", ylabel="Complementary Cumulative Probability Distribution")
+plot_to_file(file_name="ccdf_ipkts_log", title="CCDF of number of packets (in)", x=ipkts_base[:-1], y=1-ipkts_cumulative, xlabel="Number of packets (in)", ylabel="Complementary Cumulative Probability Distribution", scale='log')
+
+# Number of packets (out)
+plot_to_file(file_name="ccdf_opkts", title="CCDF of number of packets (out)", x=opkts_base[:-1], y=1-opkts_cumulative, xlabel="Number of packets (out)", ylabel="Complementary Cumulative Probability Distribution")
+plot_to_file(file_name="ccdf_opkts_log", title="CCDF of number of packets (out)", x=opkts_base[:-1], y=1-opkts_cumulative, xlabel="Number of packets (out)", ylabel="Complementary Cumulative Probability Distribution", scale='log')
 
 # ---- Port traffic
 sum_bytes_sender = port_traffic_sender['bytes_tot'].sum()
@@ -136,3 +143,4 @@ values_receiver = top_10_receiver['bytes_tot_per'].values.tolist()
 values_receiver.append(not_top_10_receiver['bytes_tot_per'].sum())
 
 plot_pie_to_file("top_10_ports_receiver", values_receiver, labels_receiver, "Top 10 ports (receiver)")
+
