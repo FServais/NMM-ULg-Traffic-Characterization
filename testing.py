@@ -2,14 +2,13 @@ import pandas as pd
 import numpy as np
 
 from utils import *
-import ipaddress
+from ipaddress import *
+
+import time
+
+start_time = time.time()
 
 CHUNKSIZE = 10 ** 5
-
-# dfs = pd.read_csv("netflow_100000.csv", chunksize=CHUNKSIZE, iterator=True)
-#
-# df = pd.concat(dfs, ignore_index=True)
-# print("")
 
 ibyts = np.array([])
 obyts = np.array([])
@@ -22,15 +21,19 @@ port_traffic_receiver = pd.DataFrame({'dp': [-1], 'ibyt': [-1], 'obyt': [-1]}, i
 
 traffic_by_ip = pd.DataFrame({'sa': [-1], 'ibyt': [-1], 'obyt': [-1]}, index=[0])
 
+traffic_by_prefix_source = pd.DataFrame({'source_netw': [-1], 'ibyt': [-1], 'ipkt': [-1]}, index=[0])
+traffic_by_prefix_dest = pd.DataFrame({'dest_netw': [-1], 'ibyt': [-1], 'ipkt': [-1]}, index=[0])
+
+
 i = 0
 df_save = pd.DataFrame()
-for df in pd.read_csv("netflow_2000000.csv", chunksize=CHUNKSIZE, iterator=True):
+for df in pd.read_csv("netflow_100000.csv", chunksize=CHUNKSIZE, iterator=True):
     i += 1
     print("Chunk number {}".format(i))
     df = df.dropna()
 
-    ibyts = np.append(ipkts, [ df[['ibyt']].mean() ])
-    obyts = np.append(opkts, [ df[['obyt']].mean() ])
+    ibyts = np.append(ibyts, [ df[['ibyt']].mean() ])
+    obyts = np.append(obyts, [ df[['obyt']].mean() ])
     ipkts = np.append(ipkts, [df[['ipkt']].mean()])
     opkts = np.append(opkts, [df[['opkt']].mean()])
     durations = np.append(durations, df[['td']].mean())
@@ -45,59 +48,81 @@ for df in pd.read_csv("netflow_2000000.csv", chunksize=CHUNKSIZE, iterator=True)
     port_traffic_receiver = gb_receiver.sum().reset_index()
 
     # Compute traffic by IP
-    traffic_by_ip = pd.concat([traffic_by_ip, df[['sa', 'ibyt', 'obyt']]])
-    gb_ip = traffic_by_ip.groupby('sa')
-    traffic_by_ip = gb_ip.sum().reset_index()
+    # traffic_by_ip = pd.concat([traffic_by_ip, df[['sa', 'ibyt', 'obyt']]])
+    # gb_ip = traffic_by_ip.groupby('sa')
+    # traffic_by_ip = gb_ip.sum().reset_index()
+
+    df['source_netw'] = df['sa'].apply(lambda x: ip_address(x))
+    df['dest_netw'] = df['da'].apply(lambda x: ip_address(x))
+
+    df['source_netw'] = df['source_netw'].apply(lambda x: str(ip_interface(str(x) + '/24').network) if isinstance(x, IPv4Address) else str(ip_interface(str(x) + '/32').network))
+    df['dest_netw'] = df['dest_netw'].apply(lambda x: str(ip_interface(str(x) + '/24').network) if isinstance(x, IPv4Address) else str(ip_interface(str(x) + '/32').network))
+
+    traffic_by_prefix_source = pd.concat([traffic_by_prefix_source, df[['source_netw', 'ibyt', 'ipkt']]])
+    gb_netw_source = traffic_by_prefix_source.groupby('source_netw')
+    traffic_by_prefix_source = gb_netw_source.sum().reset_index()
+
+    traffic_by_prefix_dest = pd.concat([traffic_by_prefix_dest, df[['dest_netw', 'ibyt', 'ipkt']]])
+    gb_netw_source = traffic_by_prefix_dest.groupby('dest_netw')
+    traffic_by_prefix_dest = gb_netw_source.sum().reset_index()
+
 
 
 
 # -- Post-processing
 
-# port_traffic_sender = port_traffic_sender[port_traffic_sender.sp != -1]
-# port_traffic_sender['bytes_tot'] = port_traffic_sender['ibyt'] + port_traffic_sender['obyt']
-#
-# port_traffic_receiver = port_traffic_receiver[port_traffic_receiver.dp != -1]
-# port_traffic_receiver['bytes_tot'] = port_traffic_receiver['ibyt'] + port_traffic_receiver['obyt']
-#
+port_traffic_sender = port_traffic_sender[port_traffic_sender.sp != -1]
+port_traffic_sender['bytes_tot'] = port_traffic_sender['ibyt'] + port_traffic_sender['obyt']
+
+port_traffic_receiver = port_traffic_receiver[port_traffic_receiver.dp != -1]
+port_traffic_receiver['bytes_tot'] = port_traffic_receiver['ibyt'] + port_traffic_receiver['obyt']
+
 
 # IP
-traffic_by_ip = traffic_by_ip[traffic_by_ip['sa'] != -1]
-traffic_by_ip['sa'] = traffic_by_ip['sa'].apply(lambda x: ipaddress.ip_address(x))
-traffic_by_ipv4 = traffic_by_ip[traffic_by_ip['sa'].apply(lambda x: isinstance(x, ipaddress.IPv4Address))]
-traffic_by_ipv6 = traffic_by_ip[traffic_by_ip['sa'].apply(lambda x: isinstance(x, ipaddress.IPv6Address))]
-
-traffic_by_ipv4_sorted = traffic_by_ipv4.sort_values(by=['sa'])
-traffic_by_ipv6_sorted = traffic_by_ipv6.sort_values(by=['sa'])
-
-for i in range(0, len(traffic_by_ipv4_sorted)):
-    begin = traffic_by_ipv4_sorted[i]
-
-    j = 1
-    end = traffic_by_ipv4_sorted[i+1]
-    while dist_ips(begin, end) < 254:
-        j += 1
-        end = traffic_by_ipv4_sorted[i + j]
-
-    end = traffic_by_ipv4_sorted[i+j-1]
-
-
-# # ---- COMPUTATIONS
+# traffic_by_ip = traffic_by_ip[traffic_by_ip['sa'] != -1]
+# traffic_by_ip['sa'] = traffic_by_ip['sa'].apply(lambda x: ip_address(x))
+# traffic_by_ipv4 = traffic_by_ip[traffic_by_ip['sa'].apply(lambda x: isinstance(x, IPv4Address))]
+# traffic_by_ipv6 = traffic_by_ip[traffic_by_ip['sa'].apply(lambda x: isinstance(x, IPv6Address))]
 #
-# # ---- Average packet size
+# traffic_by_ipv4_sorted = traffic_by_ipv4.sort_values(by=['sa'])
+# traffic_by_ipv6_sorted = traffic_by_ipv6.sort_values(by=['sa'])
 #
-# ipkt_size = ibyts/ipkts
-# ipkt_size = ipkt_size[~np.isnan(ipkt_size)]
-# if ipkt_size.size > 0:
-#     print("Average packet size (input): {0:.2f}\n".format(ipkt_size.mean()))
+# for i in range(0, len(traffic_by_ipv4_sorted)):
+#     begin = traffic_by_ipv4_sorted.iloc[i]['sa']
 #
-# opkt_size = obyts/opkts
-# opkt_size = opkt_size[~np.isnan(opkt_size)]
-# if opkt_size.size > 0:
-#     print("Average packet size (output): {0:.2f}\n".format(opkt_size.mean()))
+#     j = 1
+#     end = traffic_by_ipv4_sorted.iloc[i+1]['sa']
+#     while dist_ips(begin, end) < 254:
+#         j += 1
+#         end = traffic_by_ipv4_sorted.iloc[i + j]['sa']
 #
-# # ---- CCDF
-# # -- Compute
+#     end = traffic_by_ipv4_sorted.iloc[i+j-1]['sa']
 #
+#     longest_prefix_length = length_longest_prefix([begin, end])
+#
+#     itf = IPv4Interface(str(begin) + '/' + str(length_longest_prefix([begin, end])))
+#     traffic_by_prefix[itf] = traffic_by_ipv4_sorted.iloc[i]['ibyt']
+#
+#     i = j+1
+
+
+# ---- COMPUTATIONS
+
+# ---- Average packet size
+
+ipkt_size = ibyts/ipkts
+ipkt_size = ipkt_size[~np.isnan(ipkt_size)]
+if ipkt_size.size > 0:
+    print("Average packet size (input): {0:.2f}\n".format(ipkt_size.mean()))
+
+opkt_size = obyts/opkts
+opkt_size = opkt_size[~np.isnan(opkt_size)]
+if opkt_size.size > 0:
+    print("Average packet size (output): {0:.2f}\n".format(opkt_size.mean()))
+
+# ---- CCDF
+# -- Compute
+
 # # Flow duration
 # durations_values, durations_base = np.histogram(durations, bins=40)
 # durations_values = durations_values / len(durations)
@@ -175,3 +200,28 @@ for i in range(0, len(traffic_by_ipv4_sorted)):
 #
 # plot_pie_to_file("top_10_ports_receiver", values_receiver, labels_receiver, "Top 10 ports (receiver)")
 
+
+# 92.106.195.0/24 address block
+traffic_by_prefix_source = traffic_by_prefix_source[traffic_by_prefix_source['source_netw'] != -1]
+traffic_by_prefix_dest = traffic_by_prefix_dest[traffic_by_prefix_dest['dest_netw'] != -1]
+
+total_traffic_source_pkts = traffic_by_prefix_source['ipkt'].sum()
+total_traffic_source_byts = traffic_by_prefix_source['ibyt'].sum()
+total_traffic_dest_pkts = traffic_by_prefix_dest['ipkt'].sum()
+total_traffic_dest_byts = traffic_by_prefix_dest['ibyt'].sum()
+
+block_source = traffic_by_prefix_source[traffic_by_prefix_source['source_netw'] == '92.106.195.0/24']
+block_dest = traffic_by_prefix_dest[traffic_by_prefix_dest['dest_netw'] == '92.106.195.0/24']
+
+if len(block_source.index) > 0:
+    print('Fraction of traffic sent by 92.106.195.0/24 (in pkts): {:.3%}'.format(traffic_by_prefix_source[traffic_by_prefix_source['source_netw'] == '92.106.195.0/24']['ipkt'].iloc[0]/total_traffic_source_pkts))
+    print('Fraction of traffic sent by 92.106.195.0/24 (in bytes): {:.3%}'.format(traffic_by_prefix_source[traffic_by_prefix_source['source_netw'] == '92.106.195.0/24']['ibyt'].iloc[0]/total_traffic_source_byts))
+
+if len(block_dest.index) > 0:
+    print('Fraction of traffic sent to 92.106.195.0/24 (in pkts): {:.3%}'.format(traffic_by_prefix_dest[traffic_by_prefix_dest['dest_netw'] == '92.106.195.0/24']['ipkt'].iloc[0]/total_traffic_dest_pkts))
+    print('Fraction of traffic sent to 92.106.195.0/24 (in bytes): {:.3%}'.format(traffic_by_prefix_dest[traffic_by_prefix_dest['dest_netw'] == '92.106.195.0/24']['ibyt'].iloc[0]/total_traffic_dest_byts))
+
+
+
+
+print("Execution time: {}".format(time.time() - start_time))

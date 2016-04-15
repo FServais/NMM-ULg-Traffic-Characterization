@@ -31,8 +31,18 @@ def plot_pie_to_file(file_name, values, labels, title):
 
     plt.close()
 
+
+def get_prefix(ip):
+    """
+    Get the /24 prefix associated with the IP
+    :param ip:
+    :return:
+    """
+
+
+
 def dist_ips(ip1, ip2):
-    dist = 0;
+    dist = 0
     for subnet in summarize_address_range(ip1, ip2):
         ips_in_subnet = list(subnet.subnets(new_prefix=32))
         dist += len(ips_in_subnet)
@@ -41,20 +51,19 @@ def dist_ips(ip1, ip2):
 
 def binary_str_ipv4(ip):
     bytes = v4_int_to_packed(int(ip))
-    binary = 0;
+    binary = 0
     for byte in bytes:
         binary = (binary << 8) | byte
 
     binary_without_front_0 = bin(binary)[2:]
     return '0' * (32-len(binary_without_front_0)) + binary_without_front_0
 
-    return bin(binary)[2:]
+    # return bin(binary)[2:]
     # return bin((((((bytes[0] << 8) | (bytes[1])) << 8) | bytes[2]) << 8) | bytes[3])[2:] #
 
 def length_longest_prefix(ips):
     ips = [binary_str_ipv4(ip) for ip in ips]
     lengths = [len(ip) for ip in ips]
-    print(lengths)
     prefix = commonprefix(ips)
     print(prefix)
     return len(prefix)
