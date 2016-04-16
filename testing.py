@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 
+import matplotlib.pyplot as plt
+
 from utils import *
 from ipaddress import *
 
@@ -8,7 +10,7 @@ import time
 
 start_time = time.time()
 
-CHUNKSIZE = 10 ** 5
+CHUNKSIZE = 10 ** 6
 
 # ibyts = np.array([])
 # ipkts = np.array([])
@@ -29,7 +31,7 @@ traffic_by_prefix_dest = pd.DataFrame({'dest_netw': [-1], 'ibyt': [-1], 'ipkt': 
 
 i = 0
 df_save = pd.DataFrame()
-for df in pd.read_csv("netflow_100000.csv", chunksize=CHUNKSIZE, iterator=True):
+for df in pd.read_csv("netflow.csv", chunksize=CHUNKSIZE, iterator=True):
     i += 1
     print("Chunk number {}".format(i))
     df = df.dropna()
@@ -118,79 +120,32 @@ if ipkt_size.size > 0:
     print("Average packet size: {0:.2f}\n".format(ipkt_size.mean()))
 
 # ---- CCDF
-# -- Compute
 
-# # Flow duration
-# # durations_values, durations_base = np.histogram(durations, bins=40)
-# durations_values, durations_base = np.histogram(durations_pd.tolist(), bins=40)
-# # durations_values = durations_values / len(durations)
-# durations_values = durations_values / len(durations_pd.index)
-# durations_cumulative = np.cumsum(durations_values)
-#
-# # Number of bytes (in)
-# ibyts_values, ibyts_base = np.histogram(ibyts, bins=40)
-# ibyts_values = ibyts_values / len(ibyts)
-# ibyts_cumulative = np.cumsum(ibyts_values)
-#
-# # Number of packets (in)
-# ipkts_values, ipkts_base = np.histogram(ipkts, bins=40)
-# ipkts_values = ipkts_values / len(ipkts)
-# ipkts_cumulative = np.cumsum(ipkts_values)
-
-# Flow duration
-# durations_values, durations_base = np.histogram(durations, bins=40)
-durations_values, durations_base = np.histogram(durations_pd)
-# durations_values = durations_values / len(durations)
-durations_values = durations_values / len(durations_pd.index)
-durations_cumulative = np.cumsum(durations_values)
-
-# Number of bytes (in)
-ibyts_values, ibyts_base = np.histogram(ibyts_pd)
-ibyts_values = ibyts_values / len(ibyts_pd.index)
-ibyts_cumulative = np.cumsum(ibyts_values)
-
-# Number of packets (in)
-ipkts_values, ipkts_base = np.histogram(ibyts_pd)
-ipkts_values = ipkts_values / len(ibyts_pd.index)
-ipkts_cumulative = np.cumsum(ipkts_values)
-
-# durations_pd_ordered = durations_pd.sort_values()
-# durations_pd_ordered[len(durations_pd_ordered)] = durations_pd_ordered.iloc[-1]
-# cum_dist = 1 - np.linspace(0., 1., len(durations_pd_ordered))
-# durations_pd_ordered_cdf = pd.Series(cum_dist, index=durations_pd_ordered)
-# ax = durations_pd_ordered_cdf.plot(drawstyle='steps')
-# fig = ax.get_figure()
-# fig.savefig("test.png", dpi=300)
-#
-# ccdf_durations = ccdf(durations_pd)
-# ccdf_ipkts = ccdf(ipkts_pd)
-# ccdf_ibyts = ccdf(ibyts_pd)
-#
-# d_plot = ccdf_durations.plot(drawstyle='steps')
-# pkt_plot = ccdf_ipkts.plot(drawstyle='steps')
-# byt_plot = ccdf_ibyts.plot(drawstyle='steps')
-#
-# d_fig = d_plot.get_figure()
-# pkt_fig = pkt_plot.get_figure()
-# byt_fig = byt_plot.get_figure()
-#
-# d_fig.savefig("durations.png", dpi=300)
-# pkt_fig.savefig("ipkt.png", dpi=300)
-# byt_fig.savefig("ibyt.png", dpi=300)
+durations_pd = durations_pd.apply(lambda x: float(x))
+ipkts_pd = ipkts_pd.apply(lambda x: int(x))
+ibyts_pd = ibyts_pd.apply(lambda x: int(x))
 
 # -- Draw
 
 # Flow duration
-plot_to_file(file_name="ccdf_durations", title="CCDF of flow duration", x=durations_base[:-1], y=1-durations_cumulative, xlabel="Duration", ylabel="Complementary Cumulative Probability Distribution")
-plot_to_file(file_name="ccdf_durations_log", title="CCDF of flow duration", x=durations_base[:-1], y=1-durations_cumulative, xlabel="Duration", ylabel="Complementary Cumulative Probability Distribution", scale='log')
+sampling_step = 3
+
+durations_pd_sorted = durations_pd.sort_values()[::sampling_step]
+yvals_durations = 1 - np.arange(len(durations_pd_sorted))/float(len(durations_pd_sorted))
+plot_to_file(file_name="ccdf_durations", title="CCDF of flow duration", x=durations_pd_sorted, y=yvals_durations, xlabel="Duration", ylabel="Complementary Cumulative Probability Distribution")
+plot_to_file(file_name="ccdf_durations_log", title="CCDF of flow duration", x=durations_pd_sorted, y=yvals_durations, xlabel="Duration", ylabel="Complementary Cumulative Probability Distribution", scale='log')
 
 # Number of bytes
-plot_to_file(file_name="ccdf_byts", title="CCDF of number of bytes", x=ibyts_base[:-1], y=1-ibyts_cumulative, xlabel="Number of bytes", ylabel="Complementary Cumulative Probability Distribution")
-plot_to_file(file_name="ccdf_byts_log", title="CCDF of number of bytes", x=ibyts_base[:-1], y=1-ibyts_cumulative, xlabel="Number of bytes", ylabel="Complementary Cumulative Probability Distribution", scale='log')
+ibyts_pd_sorted = ibyts_pd.sort_values()[::sampling_step]
+yvals_ibyts = 1 - np.arange(len(ibyts_pd_sorted))/float(len(ibyts_pd_sorted))
+plot_to_file(file_name="ccdf_byts", title="CCDF of number of bytes", x=ibyts_pd_sorted, y=yvals_ibyts, xlabel="Number of bytes", ylabel="Complementary Cumulative Probability Distribution")
+plot_to_file(file_name="ccdf_byts_log", title="CCDF of number of bytes", x=ibyts_pd_sorted, y=yvals_ibyts, xlabel="Number of bytes", ylabel="Complementary Cumulative Probability Distribution", scale='log')
 
 # Number of packets
-plot_to_file(file_name="ccdf_pkts", title="CCDF of number of packets", x=ipkts_base[:-1], y=1-ipkts_cumulative, xlabel="Number of packets", ylabel="Complementary Cumulative Probability Distribution")
-plot_to_file(file_name="ccdf_pkts_log", title="CCDF of number of packets", x=ipkts_base[:-1], y=1-ipkts_cumulative, xlabel="Number of packets", ylabel="Complementary Cumulative Probability Distribution", scale='log')
+ipkts_pd_sorted = ipkts_pd.sort_values()[::sampling_step]
+yvals_ipkts = 1 - np.arange(len(ipkts_pd_sorted))/float(len(ipkts_pd_sorted))
+plot_to_file(file_name="ccdf_pkts", title="CCDF of number of packets", x=ipkts_pd_sorted, y=yvals_ipkts, xlabel="Number of packets", ylabel="Complementary Cumulative Probability Distribution")
+plot_to_file(file_name="ccdf_pkts_log", title="CCDF of number of packets", x=ipkts_pd_sorted, y=yvals_ipkts, xlabel="Number of packets", ylabel="Complementary Cumulative Probability Distribution", scale='log')
 
 
 # ---- Port traffic
@@ -243,8 +198,6 @@ if len(block_source.index) > 0:
 if len(block_dest.index) > 0:
     print('Fraction of traffic sent to 92.106.195.0/24 (in pkts): {:.3%}'.format(traffic_by_prefix_dest[traffic_by_prefix_dest['dest_netw'] == '92.106.195.0/24']['ipkt'].iloc[0]/total_traffic_dest_pkts))
     print('Fraction of traffic sent to 92.106.195.0/24 (in bytes): {:.3%}'.format(traffic_by_prefix_dest[traffic_by_prefix_dest['dest_netw'] == '92.106.195.0/24']['ibyt'].iloc[0]/total_traffic_dest_byts))
-
-
 
 
 print("Execution time: {}".format(time.time() - start_time))

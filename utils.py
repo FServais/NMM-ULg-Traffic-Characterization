@@ -3,7 +3,7 @@ from matplotlib import cm
 from ipaddress import *
 from os.path import commonprefix
 import pandas as pd
-
+import pickle
 import numpy as np
 
 def plot_to_file(file_name, x, y, title, xlabel, ylabel, scale='lin'):
@@ -72,3 +72,8 @@ def length_longest_prefix(ips):
     prefix = commonprefix(ips)
     print(prefix)
     return len(prefix)
+
+def save_pkl(l):
+    with open('vars.pickle', 'w') as f:
+        pickle.dump(l, f)
+
