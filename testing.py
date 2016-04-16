@@ -8,11 +8,15 @@ import time
 
 start_time = time.time()
 
-CHUNKSIZE = 10 ** 6
+CHUNKSIZE = 10 ** 5
 
-ibyts = np.array([])
-ipkts = np.array([])
-durations = np.array([])
+# ibyts = np.array([])
+# ipkts = np.array([])
+# durations = np.array([])
+
+ibyts_pd = pd.Series()
+ipkts_pd = pd.Series()
+durations_pd = pd.Series()
 
 port_traffic_sender = pd.DataFrame({'sp': [-1], 'ibyt': [-1]}, index=[0]) # Init with row of port -1 to set the columns as integers
 port_traffic_receiver = pd.DataFrame({'dp': [-1], 'ibyt': [-1]}, index=[0])
@@ -25,14 +29,18 @@ traffic_by_prefix_dest = pd.DataFrame({'dest_netw': [-1], 'ibyt': [-1], 'ipkt': 
 
 i = 0
 df_save = pd.DataFrame()
-for df in pd.read_csv("netflow.csv", chunksize=CHUNKSIZE, iterator=True):
+for df in pd.read_csv("netflow_100000.csv", chunksize=CHUNKSIZE, iterator=True):
     i += 1
     print("Chunk number {}".format(i))
     df = df.dropna()
 
-    ibyts = np.append(ibyts, [ df[['ibyt']].mean() ])
-    ipkts = np.append(ipkts, [df[['ipkt']].mean()])
-    durations = np.append(durations, df[['td']].mean())
+    # ibyts = np.append(ibyts, [ df[['ibyt']].mean() ])
+    # ipkts = np.append(ipkts, [df[['ipkt']].mean()])
+    # durations = np.append(durations, df[['td']].mean())
+
+    ibyts_pd = pd.concat([ibyts_pd, df[['ibyt']].ix[:,0]])
+    ipkts_pd = pd.concat([ipkts_pd, df[['ipkt']].ix[:,0]])
+    durations_pd = pd.concat([durations_pd, df[['td']].ix[:,0]])
 
     # Compute traffic by port
     port_traffic_sender = pd.concat([port_traffic_sender, df[['sp', 'ibyt']]])
@@ -61,9 +69,6 @@ for df in pd.read_csv("netflow.csv", chunksize=CHUNKSIZE, iterator=True):
     traffic_by_prefix_dest = pd.concat([traffic_by_prefix_dest, df[['dest_netw', 'ibyt', 'ipkt']]])
     gb_netw_source = traffic_by_prefix_dest.groupby('dest_netw')
     traffic_by_prefix_dest = gb_netw_source.sum().reset_index()
-
-
-
 
 # -- Post-processing
 
@@ -106,7 +111,8 @@ port_traffic_receiver['bytes_tot'] = port_traffic_receiver['ibyt']
 
 # ---- Average packet size
 
-ipkt_size = ibyts/ipkts
+# ipkt_size = ibyts/ipkts
+ipkt_size =ibyts_pd/ipkts_pd
 ipkt_size = ipkt_size[~np.isnan(ipkt_size)]
 if ipkt_size.size > 0:
     print("Average packet size: {0:.2f}\n".format(ipkt_size.mean()))
@@ -114,21 +120,63 @@ if ipkt_size.size > 0:
 # ---- CCDF
 # -- Compute
 
+# # Flow duration
+# # durations_values, durations_base = np.histogram(durations, bins=40)
+# durations_values, durations_base = np.histogram(durations_pd.tolist(), bins=40)
+# # durations_values = durations_values / len(durations)
+# durations_values = durations_values / len(durations_pd.index)
+# durations_cumulative = np.cumsum(durations_values)
+#
+# # Number of bytes (in)
+# ibyts_values, ibyts_base = np.histogram(ibyts, bins=40)
+# ibyts_values = ibyts_values / len(ibyts)
+# ibyts_cumulative = np.cumsum(ibyts_values)
+#
+# # Number of packets (in)
+# ipkts_values, ipkts_base = np.histogram(ipkts, bins=40)
+# ipkts_values = ipkts_values / len(ipkts)
+# ipkts_cumulative = np.cumsum(ipkts_values)
+
 # Flow duration
-durations_values, durations_base = np.histogram(durations, bins=40)
-durations_values = durations_values / len(durations)
+# durations_values, durations_base = np.histogram(durations, bins=40)
+durations_values, durations_base = np.histogram(durations_pd)
+# durations_values = durations_values / len(durations)
+durations_values = durations_values / len(durations_pd.index)
 durations_cumulative = np.cumsum(durations_values)
 
 # Number of bytes (in)
-ibyts_values, ibyts_base = np.histogram(ibyts, bins=40)
-ibyts_values = ibyts_values / len(ibyts)
+ibyts_values, ibyts_base = np.histogram(ibyts_pd)
+ibyts_values = ibyts_values / len(ibyts_pd.index)
 ibyts_cumulative = np.cumsum(ibyts_values)
 
 # Number of packets (in)
-ipkts_values, ipkts_base = np.histogram(ipkts, bins=40)
-ipkts_values = ipkts_values / len(ipkts)
+ipkts_values, ipkts_base = np.histogram(ibyts_pd)
+ipkts_values = ipkts_values / len(ibyts_pd.index)
 ipkts_cumulative = np.cumsum(ipkts_values)
 
+# durations_pd_ordered = durations_pd.sort_values()
+# durations_pd_ordered[len(durations_pd_ordered)] = durations_pd_ordered.iloc[-1]
+# cum_dist = 1 - np.linspace(0., 1., len(durations_pd_ordered))
+# durations_pd_ordered_cdf = pd.Series(cum_dist, index=durations_pd_ordered)
+# ax = durations_pd_ordered_cdf.plot(drawstyle='steps')
+# fig = ax.get_figure()
+# fig.savefig("test.png", dpi=300)
+#
+# ccdf_durations = ccdf(durations_pd)
+# ccdf_ipkts = ccdf(ipkts_pd)
+# ccdf_ibyts = ccdf(ibyts_pd)
+#
+# d_plot = ccdf_durations.plot(drawstyle='steps')
+# pkt_plot = ccdf_ipkts.plot(drawstyle='steps')
+# byt_plot = ccdf_ibyts.plot(drawstyle='steps')
+#
+# d_fig = d_plot.get_figure()
+# pkt_fig = pkt_plot.get_figure()
+# byt_fig = byt_plot.get_figure()
+#
+# d_fig.savefig("durations.png", dpi=300)
+# pkt_fig.savefig("ipkt.png", dpi=300)
+# byt_fig.savefig("ibyt.png", dpi=300)
 
 # -- Draw
 

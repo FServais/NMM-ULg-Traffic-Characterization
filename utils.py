@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 from ipaddress import *
 from os.path import commonprefix
+import pandas as pd
 
 import numpy as np
 
@@ -37,6 +38,13 @@ def plot_pie_to_file(file_name, values, labels, title):
 
     plt.close()
 
+def ccdf(s):
+    s_sorted = s.sort_values()
+    s_sorted[len(s_sorted)] = s_sorted.iloc[-1]
+    cum_dist = 1 - np.linspace(0., 1., len(s_sorted))
+    ccdf = pd.Series(cum_dist, index=s_sorted)
+
+    return ccdf
 
 def dist_ips(ip1, ip2):
     dist = 0
