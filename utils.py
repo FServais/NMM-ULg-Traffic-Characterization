@@ -25,9 +25,15 @@ def plot_pie_to_file(file_name, values, labels, title):
     plt.title(title)
 
     cs = cm.Set1(np.arange(len(values)) / len(values))
-    plt.pie(values, labels=labels, autopct='%1.1f%%', colors=cs)
+    plt.pie(values, labels=labels, colors=cs, labeldistance=0.7)
+
+    labels_with_values = []
+    for i in range(0,len(values)):
+        labels_with_values.append(str(labels[i]) + ' ({:.2f}%)'.format(values[i]*100))
+
+    lgd = plt.legend(labels_with_values, loc='center left', bbox_to_anchor=(1, 0.5))
     plt.axis('equal')
-    plt.savefig("{}.pdf".format(file_name))
+    plt.savefig("{}.pdf".format(file_name), bbox_extra_artists=(lgd,), bbox_inches='tight')
 
     plt.close()
 
