@@ -32,15 +32,6 @@ def plot_pie_to_file(file_name, values, labels, title):
     plt.close()
 
 
-def get_prefix(ip):
-    """
-    Get the /24 prefix associated with the IP
-    :param ip:
-    :return:
-    """
-
-
-
 def dist_ips(ip1, ip2):
     dist = 0
     for subnet in summarize_address_range(ip1, ip2):
