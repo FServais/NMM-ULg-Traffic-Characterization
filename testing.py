@@ -137,12 +137,13 @@ plot_to_file(file_name="ccdf_durations", title="CCDF of flow duration", x=durati
 plot_to_file(file_name="ccdf_durations_log", title="CCDF of flow duration", x=durations_base[:-1], y=1-durations_cumulative, xlabel="Duration", ylabel="Complementary Cumulative Probability Distribution", scale='log')
 
 # Number of bytes
-plot_to_file(file_name="ccdf_byts", title="CCDF of number of bytes (in)", x=ibyts_base[:-1], y=1-ibyts_cumulative, xlabel="Number of bytes (in)", ylabel="Complementary Cumulative Probability Distribution")
-plot_to_file(file_name="ccdf_byts_log", title="CCDF of number of bytes (in)", x=ibyts_base[:-1], y=1-ibyts_cumulative, xlabel="Number of bytes (in)", ylabel="Complementary Cumulative Probability Distribution", scale='log')
+plot_to_file(file_name="ccdf_byts", title="CCDF of number of bytes", x=ibyts_base[:-1], y=1-ibyts_cumulative, xlabel="Number of bytes", ylabel="Complementary Cumulative Probability Distribution")
+plot_to_file(file_name="ccdf_byts_log", title="CCDF of number of bytes", x=ibyts_base[:-1], y=1-ibyts_cumulative, xlabel="Number of bytes", ylabel="Complementary Cumulative Probability Distribution", scale='log')
 
 # Number of packets
-plot_to_file(file_name="ccdf_pkts", title="CCDF of number of packets (in)", x=ipkts_base[:-1], y=1-ipkts_cumulative, xlabel="Number of packets (in)", ylabel="Complementary Cumulative Probability Distribution")
-plot_to_file(file_name="ccdf_pkts_log", title="CCDF of number of packets (in)", x=ipkts_base[:-1], y=1-ipkts_cumulative, xlabel="Number of packets (in)", ylabel="Complementary Cumulative Probability Distribution", scale='log')
+plot_to_file(file_name="ccdf_pkts", title="CCDF of number of packets", x=ipkts_base[:-1], y=1-ipkts_cumulative, xlabel="Number of packets", ylabel="Complementary Cumulative Probability Distribution")
+plot_to_file(file_name="ccdf_pkts_log", title="CCDF of number of packets", x=ipkts_base[:-1], y=1-ipkts_cumulative, xlabel="Number of packets", ylabel="Complementary Cumulative Probability Distribution", scale='log')
+
 
 # ---- Port traffic
 sum_bytes_sender = port_traffic_sender['bytes_tot'].sum()
@@ -157,7 +158,7 @@ not_top_10_sender = port_traffic_sender.sort_values(by=['bytes_tot_per'], ascend
 not_top_10_receiver = port_traffic_receiver.sort_values(by=['bytes_tot_per'], ascending=[False])[10:]
 
 # -- Sender
-port_sender_list = top_10_sender['sp'].values.tolist()
+port_sender_list = [int(label) for label in top_10_sender['sp'].values.tolist()]
 port_sender_list.append("Others")
 labels_sender = tuple(port_sender_list)
 values_sender = top_10_sender['bytes_tot_per'].values.tolist()
@@ -166,7 +167,7 @@ values_sender.append(not_top_10_sender['bytes_tot_per'].sum())
 plot_pie_to_file("top_10_ports_sender", values_sender, labels_sender, "Top 10 ports (sender)")
 
 # -- Receiver
-port_receiver_list = top_10_receiver['dp'].values.tolist()
+port_receiver_list = [int(label) for label in top_10_receiver['dp'].values.tolist()]
 port_receiver_list.append("Others")
 labels_receiver = tuple(port_receiver_list)
 values_receiver = top_10_receiver['bytes_tot_per'].values.tolist()
