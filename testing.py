@@ -179,6 +179,30 @@ values_receiver.append(not_top_10_receiver['bytes_tot_per'].sum())
 plot_pie_to_file("top_10_ports_receiver", values_receiver, labels_receiver, "Top 10 ports (receiver)")
 
 
+# Top prefixes
+traffic_by_prefix_source_ordered = traffic_by_prefix_source.sort_values(by=['ibyt'], ascending=[False])
+traffic_by_prefix_source_ordered_tot = traffic_by_prefix_source_ordered['ibyt'].sum()
+traffic_by_prefix_source_len = len(traffic_by_prefix_source.index)
+
+# Top 0.1%
+n_01 = round(0.001 * traffic_by_prefix_source_len)
+traffic_by_prefix_source_n01 = traffic_by_prefix_source_ordered[:n_01]
+part_total_traffic_01 = traffic_by_prefix_source_n01['ibyt'].sum() / traffic_by_prefix_source_ordered_tot
+print("Percentage of the traffic from the top 0.1% prefixes: {:.5f}%".format(part_total_traffic_01*100))
+
+# Top 1%
+n_1 = round(0.01 * traffic_by_prefix_source_len)
+traffic_by_prefix_source_n1 = traffic_by_prefix_source_ordered[:n_1]
+part_total_traffic_1 = traffic_by_prefix_source_n1['ibyt'].sum() / traffic_by_prefix_source_ordered_tot
+print("Percentage of the traffic from the top 1% prefixes: {:.5f}%".format(part_total_traffic_1*100))
+
+# Top 10%
+n_10 = round(0.1 * traffic_by_prefix_source_len)
+traffic_by_prefix_source_n10 = traffic_by_prefix_source_ordered[:n_10]
+part_total_traffic_10 = traffic_by_prefix_source_n10['ibyt'].sum() / traffic_by_prefix_source_ordered_tot
+print("Percentage of the traffic from the top 10% prefixes: {:.5f}%".format(part_total_traffic_10*100))
+
+
 # 92.106.195.0/24 address block
 traffic_by_prefix_source = traffic_by_prefix_source[traffic_by_prefix_source['source_netw'] != -1]
 traffic_by_prefix_dest = traffic_by_prefix_dest[traffic_by_prefix_dest['dest_netw'] != -1]
