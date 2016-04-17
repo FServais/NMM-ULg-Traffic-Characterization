@@ -7,7 +7,7 @@ import time
 
 start_time = time.time()
 
-CHUNKSIZE = 10 ** 6
+CHUNKSIZE = 10 ** 5
 
 ibyts_pd = pd.Series()
 ipkts_pd = pd.Series()
@@ -71,7 +71,7 @@ port_traffic_receiver['bytes_tot'] = port_traffic_receiver['ibyt']
 
 traffic_by_prefix_source = traffic_by_prefix_source[traffic_by_prefix_source.source_netw != -1]
 
-traffic_by_prefix_dest = traffic_by_prefix_dest[traffic_by_prefix_dest.dp != -1]
+traffic_by_prefix_dest = traffic_by_prefix_dest[traffic_by_prefix_dest.dest_netw != -1]
 
 
 # IP
@@ -106,7 +106,6 @@ traffic_by_prefix_dest = traffic_by_prefix_dest[traffic_by_prefix_dest.dp != -1]
 
 # ---- Average packet size
 
-# ipkt_size = ibyts/ipkts
 ipkt_size =ibyts_pd/ipkts_pd
 ipkt_size = ipkt_size[~np.isnan(ipkt_size)]
 if ipkt_size.size > 0:

@@ -81,9 +81,6 @@ def binary_str_ipv4(ip):
     binary_without_front_0 = bin(binary)[2:]
     return '0' * (32-len(binary_without_front_0)) + binary_without_front_0
 
-    # return bin(binary)[2:]
-    # return bin((((((bytes[0] << 8) | (bytes[1])) << 8) | bytes[2]) << 8) | bytes[3])[2:] #
-
 def length_longest_prefix(ips):
     ips = [binary_str_ipv4(ip) for ip in ips]
     lengths = [len(ip) for ip in ips]
