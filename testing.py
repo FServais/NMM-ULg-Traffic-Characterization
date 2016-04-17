@@ -1,20 +1,13 @@
-import pandas as pd
-import numpy as np
-
-import matplotlib.pyplot as plt
-
 from utils import *
 from ipaddress import *
+
+import pandas as pd
 
 import time
 
 start_time = time.time()
 
 CHUNKSIZE = 10 ** 6
-
-# ibyts = np.array([])
-# ipkts = np.array([])
-# durations = np.array([])
 
 ibyts_pd = pd.Series()
 ipkts_pd = pd.Series()
@@ -31,14 +24,10 @@ traffic_by_prefix_dest = pd.DataFrame({'dest_netw': [-1], 'ibyt': [-1], 'ipkt': 
 
 i = 0
 df_save = pd.DataFrame()
-for df in pd.read_csv("netflow.csv", chunksize=CHUNKSIZE, iterator=True):
+for df in pd.read_csv("netflow_100000.csv", chunksize=CHUNKSIZE, iterator=True):
     i += 1
     print("Chunk number {}".format(i))
     df = df.dropna()
-
-    # ibyts = np.append(ibyts, [ df[['ibyt']].mean() ])
-    # ipkts = np.append(ipkts, [df[['ipkt']].mean()])
-    # durations = np.append(durations, df[['td']].mean())
 
     ibyts_pd = pd.concat([ibyts_pd, df[['ibyt']].ix[:,0]])
     ipkts_pd = pd.concat([ipkts_pd, df[['ipkt']].ix[:,0]])
@@ -79,6 +68,10 @@ port_traffic_sender['bytes_tot'] = port_traffic_sender['ibyt']
 
 port_traffic_receiver = port_traffic_receiver[port_traffic_receiver.dp != -1]
 port_traffic_receiver['bytes_tot'] = port_traffic_receiver['ibyt']
+
+traffic_by_prefix_source = traffic_by_prefix_source[traffic_by_prefix_source.source_netw != -1]
+
+traffic_by_prefix_dest = traffic_by_prefix_dest[traffic_by_prefix_dest.dp != -1]
 
 
 # IP

@@ -2,8 +2,6 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 from ipaddress import *
 from os.path import commonprefix
-import pandas as pd
-import pickle
 import numpy as np
 
 def plot_to_file(file_name, x, y, title, xlabel, ylabel, scale='lin'):
@@ -20,6 +18,33 @@ def plot_to_file(file_name, x, y, title, xlabel, ylabel, scale='lin'):
     plt.savefig("{}.pdf".format(file_name))
 
     plt.close()
+
+def plot_fig(x, y, title, xlabel, ylabel, scale='lin'):
+    plt.figure()
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+
+    if scale == 'log':
+        plt.loglog(x, y)
+    else:
+        plt.plot(x, y)
+
+
+def plot_pie(values, labels, title):
+    plt.figure()
+    plt.title(title)
+
+    cs = cm.Set1(np.arange(len(values)) / len(values))
+    plt.pie(values, labels=labels, colors=cs, labeldistance=0.7)
+
+    labels_with_values = []
+    for i in range(0,len(values)):
+        labels_with_values.append(str(labels[i]) + ' ({:.2f}%)'.format(values[i]*100))
+
+    lgd = plt.legend(labels_with_values, loc='center left', bbox_to_anchor=(1, 0.5))
+    plt.axis('equal')
+
 
 def plot_pie_to_file(file_name, values, labels, title):
     plt.figure()
@@ -38,13 +63,6 @@ def plot_pie_to_file(file_name, values, labels, title):
 
     plt.close()
 
-def ccdf(s):
-    s_sorted = s.sort_values()
-    s_sorted[len(s_sorted)] = s_sorted.iloc[-1]
-    cum_dist = 1 - np.linspace(0., 1., len(s_sorted))
-    ccdf = pd.Series(cum_dist, index=s_sorted)
-
-    return ccdf
 
 def dist_ips(ip1, ip2):
     dist = 0
@@ -72,8 +90,4 @@ def length_longest_prefix(ips):
     prefix = commonprefix(ips)
     print(prefix)
     return len(prefix)
-
-def save_pkl(l):
-    with open('vars.pickle', 'w') as f:
-        pickle.dump(l, f)
 
